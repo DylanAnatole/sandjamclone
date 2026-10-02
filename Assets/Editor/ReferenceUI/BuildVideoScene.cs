@@ -12,8 +12,9 @@ namespace SandJamTest.Editor
 {
     public static partial class BuildVideoScene
     {
-        const string Folder="Assets/Generated/VideoUI";
-        const string Scene="Assets/Scenes/SandJamVideoUI.unity";
+        static string Folder { get { return chainDemo ? "Assets/Generated/ChainTest" : "Assets/Generated/VideoUI"; } }
+        static bool chainDemo;
+        static string Scene { get { return chainDemo ? "Assets/Scenes/SandJamChainTest.unity" : "Assets/Scenes/SandJamVideoUI.unity"; } }
         static Color VideoColor(int id){switch(id){case 1: return new Color(0.74509805f,0.09411765f,0.09411765f,1.0f);case 2: return new Color(0.11372549f,0.7921569f,0.0f,1.0f);case 3: return new Color(0.0f,0.6392157f,1.0f,1.0f);case 4: return new Color(1.0f,0.8039216f,0.0f,1.0f);case 5: return new Color(1.0f,0.5294118f,0.0f,1.0f);case 6: return new Color(0.83137256f,0.0f,0.78039217f,1.0f);case 7: return new Color(0.43529412f,0.0f,0.9254902f,1.0f);case 8: return new Color(0.07450981f,0.07450981f,0.07450981f,1.0f);case 9: return new Color(0.8666667f,0.8666667f,0.8666667f,1.0f);case 10: return new Color(0.6509804f,0.40392157f,0.22352941f,1.0f);default:return SandJamDemo.Palette(id);}}
         static Font font; static Material spriteMaterial;
         static Sprite rounded, pad;
@@ -109,7 +110,9 @@ namespace SandJamTest.Editor
             var data=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>("VideoUI/PopArtOriginal").text);
             // The video uses the special variant's fifth-slot threshold. Keep both exports unchanged.
             data.gridSlotNeedAmmoCount=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>("VideoUI/PopArtSecretReference").text).gridSlotNeedAmmoCount;
-            File.WriteAllText(Folder+"/ReferencePlayable.json",JsonUtility.ToJson(data,true));AssetDatabase.ImportAsset(Folder+"/ReferencePlayable.json");controller.LevelJson=AssetDatabase.LoadAssetAtPath<TextAsset>(Folder+"/ReferencePlayable.json");SandGame.Validate(data);
+            if (chainDemo) ConfigureChainDemo(data);
+            string playable = Folder + (chainDemo ? "/ChainPlayable.json" : "/ReferencePlayable.json");
+            File.WriteAllText(playable,JsonUtility.ToJson(data,true));AssetDatabase.ImportAsset(playable);controller.LevelJson=AssetDatabase.LoadAssetAtPath<TextAsset>(playable);SandGame.Validate(data);
             var board=Group("Pop Art face - grid texture",root);board.position=new Vector3(0,-.695f-.4f*(3.60f/6.3f),0);board.localScale=Vector3.one*(3.60f/6.3f);
             controller.Regions=new SceneRegionView[data.parts.Length];
             for(int i=0;i<data.parts.Length;i++)
@@ -146,7 +149,7 @@ namespace SandJamTest.Editor
                     view.Motion=AnimatedCharacter(pose,info.ColorType,1.18f);view.Visual=pose;
                     var label=Text("Ammo",DisplayAmount.Units(info.AmmoCount,data.uiDivider).ToString(),actor,0,0,21,Color.white,-.7f,true);label.transform.localPosition=new Vector3(0,.06f,-.75f);view.AmmoLabel=label;
                     view.ClickCollider=actor.gameObject.AddComponent<BoxCollider>();view.ClickCollider.center=new Vector3(0,.30f,0);view.ClickCollider.size=new Vector3(.73f,.84f,1.5f);
-                    if(secretData.laneData[lane].ColorAmmoDatas[order].IsSecret)
+                    if(!chainDemo && secretData.laneData[lane].ColorAmmoDatas[order].IsSecret)
                     {
                         var coverRoot=MysteryCube(actor);var q=actor.gameObject.AddComponent<ReferenceQueueCover>();q.Actor=view;q.Controller=controller;q.Cover=coverRoot;q.MaskedRenderers=pose.GetComponentsInChildren<Renderer>();
                     }
@@ -157,14 +160,50 @@ namespace SandJamTest.Editor
             controller.InterfaceFont=font;controller.SelectSound=Resources.Load<AudioClip>("Original/Select");controller.CompleteSound=Resources.Load<AudioClip>("Original/RegionComplete");controller.VictorySound=Resources.Load<AudioClip>("Original/Victory");controller.PlayButtonTexture=Resources.Load<Texture2D>("Original/PlayButton");
             var camera=Group("Main Camera",root).gameObject.AddComponent<Camera>();camera.tag="MainCamera";camera.transform.position=new Vector3(0,0,-30);camera.orthographic=true;camera.orthographicSize=5.375f;camera.nearClipPlane=.1f;camera.farClipPlane=100;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Hex("DDD8F8");camera.gameObject.AddComponent<AudioListener>();controller.GameCamera=camera;
             ComposeScreens(root,reference,controller);ApplyDepth(root,reference,controller);
+            if(chainDemo) { root.gameObject.AddComponent<ChainMechanicSmoke>(); foreach(var label in root.GetComponentsInChildren<TextMesh>(true)) if(label.text=="Level 147")label.text="Chain Test"; }
             EditorSceneManager.SaveScene(scene,Scene);AssetDatabase.SaveAssets();
         }
         public static void CreateAndBuild()
         {
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true)};
-            Create();PlayerSettings.defaultScreenWidth=483;PlayerSettings.defaultScreenHeight=1075;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;QualitySettings.antiAliasing=4;PlayerSettings.runInBackground=true;Directory.CreateDirectory("BuildVideoUI");
-            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},locationPathName="BuildVideoUI/SandJam-VideoUI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
+            Create();PlayerSettings.defaultScreenWidth=483;PlayerSettings.defaultScreenHeight=1075;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;QualitySettings.antiAliasing=4;PlayerSettings.runInBackground=true;
+            string output = chainDemo ? "BuildChainTest" : "BuildVideoUI"; Directory.CreateDirectory(output);
+            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},locationPathName=output+"/SandJam-VideoUI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Reference build failed");
+        }
+
+        static void ConfigureChainDemo(LevelData data)
+        {
+            // Dedicated mechanic fixture, not a claim to reconstruct level 97's artwork.
+            data.sceneName = "Linked black and yellow pair";
+            data.gridSlotNeedAmmoCount = new[] { 0, 0, 0, 0, 300 };
+            for (int i = 0; i < data.parts.Length; i++)
+            {
+                data.parts[i].ColorType = i % 2 == 0 ? 8 : 4;
+                data.parts[i].amount = 20;
+                data.parts[i].isOpenedAtStart = true;
+            }
+            data.laneData = new[] {
+                new LaneData { ColorAmmoDatas = new[] { new CharacterData { ColorType = 8, AmmoCount = data.parts.Count(p=>p.ColorType==8)*20, IsChain=true } } },
+                new LaneData { ColorAmmoDatas = new[] { new CharacterData { ColorType = 4, AmmoCount = data.parts.Count(p=>p.ColorType==4)*20, IsChain=true } } },
+                new LaneData { ColorAmmoDatas = new CharacterData[0] }
+            };
+        }
+
+        [MenuItem("Sand Jam/Create linked pair test scene")]
+        public static void CreateChainScene()
+        {
+            chainDemo = true;
+            try { Create(); }
+            finally { chainDemo = false; }
+        }
+
+        public static void CreateChainAndBuild()
+        {
+            ChainMechanicChecks.Run();
+            chainDemo = true;
+            try { CreateAndBuild(); }
+            finally { chainDemo = false; }
         }
     }
 }

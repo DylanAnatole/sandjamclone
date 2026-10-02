@@ -15,6 +15,8 @@ Không cần project AssetRipper bên ngoài để chạy scene. Các asset cầ
 
 ## Điều khiển
 
+**Test cặp hộp nối nhau:** mở `Assets/Scenes/SandJamChainTest.unity`, Play → PLAY, rồi chọn hộp đen hoặc vàng. [Cơ chế và dữ liệu cặp nối](Documentation/CHAIN_MECHANIC_VI.md). [Phân chia scripts](Documentation/SCRIPT_STRUCTURE_V2_VI.md).
+
 - Chuột hoặc **1 / 2 / 3**: chọn nhân vật đầu hàng.
 - **R**: chơi lại; **Space**: tạm dừng gameplay; **Esc**: về Home.
 - **F1–F5**: xem nhanh Loading, Home, Gameplay, chúc mừng và bảng thưởng. F4/F5 là chế độ xem giao diện.
