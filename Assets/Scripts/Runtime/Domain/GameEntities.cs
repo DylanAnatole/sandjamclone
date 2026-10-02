@@ -13,6 +13,8 @@ namespace SandJamTest
         public readonly PartData Data;
         public int Remaining;
         public bool Open;
+        public bool Revealed;
+        public bool InformationVisible { get { return Open || Revealed; } }
         public Region(PartData data) { Data = data; Remaining = data.amount; Open = data.isOpenedAtStart; }
     }
     public struct Shot

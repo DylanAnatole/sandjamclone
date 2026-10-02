@@ -9,6 +9,7 @@ namespace SandJamTest.Scene3D
     public sealed class CharacterQueueController
     {
         readonly Dictionary<Shooter, SceneActorView> actors = new Dictionary<Shooter, SceneActorView>();
+        readonly List<ChainLinkView> links = new List<ChainLinkView>();
         readonly SceneActorView[] Characters;
         readonly Transform[] LaneStarts, StashSlots;
         readonly float QueueSpacing;
@@ -20,6 +21,7 @@ namespace SandJamTest.Scene3D
         public void Bind(SandGame Game, LevelData level)
         {
             actors.Clear();
+            links.Clear();
             for (int lane = 0; lane < Game.Lanes.Length; lane++)
             {
                 var queue = Game.Lanes[lane].ToArray();
@@ -45,10 +47,14 @@ namespace SandJamTest.Scene3D
                     linkRoot.transform.SetParent(pair.Value.transform, false);
                     var link = linkRoot.AddComponent<ChainLinkView>();
                     link.First = pair.Value; link.Second = actors[pair.Key.Partner];
+                    links.Add(link);
                 }
         }
         public void Synchronize(SandGame Game, float delta)
         {
+            foreach (var link in links)
+                link.SetInQueue(Game.Lanes[link.First.SourceLane].Contains(link.First.Shooter) &&
+                    Game.Lanes[link.Second.SourceLane].Contains(link.Second.Shooter));
             for (int lane = 0; lane < Game.Lanes.Length; lane++)
             {
                 int order = 0;

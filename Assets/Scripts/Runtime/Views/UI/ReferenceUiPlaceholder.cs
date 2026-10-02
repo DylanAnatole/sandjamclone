@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace SandJamTest.Scene3D
 {
-    // Visual placeholder only: no purchase, currency deduction or booster action.
+    // Metadata for reference UI. BoosterController enables the three gameplay actions at runtime.
     public sealed class ReferenceUiPlaceholder : MonoBehaviour
     {
         public string ActionId;

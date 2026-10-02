@@ -28,12 +28,14 @@ namespace SandJamTest.Scene3D
         Color32[] settledColors;
         readonly List<Vector2Int> previousMoving=new List<Vector2Int>(256);
         int lastRemaining=-1;
-        bool lastOpen;
-        float stepTime;
+        bool lastOpen, lastVisible;
+        float stepTime, completionGlow;
         const float StepSeconds=1f/300f;
         public void AttachBoard(SandBoardTextureView board)
         {
             Board=board; Geometry.GetComponent<MeshRenderer>().enabled=false;
+            // Labels revealed after startup must sort above the shared transparent board sprite.
+            foreach (var renderer in Counter.GetComponentsInChildren<MeshRenderer>(true)) renderer.sortingOrder=10;
         }
         public void ValidateFlow() { if(sand!=null) sand.Validate(); }
         void ClearMoving()
@@ -43,7 +45,7 @@ namespace SandJamTest.Scene3D
         }
         public void ResetFlow()
         {
-            ClearMoving(); sand=null; lastRemaining=-1; stepTime=0;
+            ClearMoving(); sand=null; lastRemaining=-1; stepTime=0;completionGlow=0;
         }
         public void Apply(Region region)
         {
@@ -55,18 +57,18 @@ namespace SandJamTest.Scene3D
                 settledColors=new Color32[sand.Filled.Length];
                 for(int i=0;i<settledColors.Length;i++) { Color tint=(Color)solid*(.88f+((i*37)%17)*.012f); tint.a=1; settledColors[i]=tint; }
             }
-            if(region.Remaining==lastRemaining && region.Open==lastOpen) return;
-            lastRemaining=region.Remaining; lastOpen=region.Open;
+            if(region.Remaining==lastRemaining && region.Open==lastOpen && region.InformationVisible==lastVisible) return;
+            lastRemaining=region.Remaining; lastOpen=region.Open; lastVisible=region.InformationVisible;
             sand.Request((int)((long)(region.Data.amount-region.Remaining)*region.Data.rows.Length/region.Data.amount));
-            empty=Color.Lerp(EmptyTint,(Color)solid,region.Open?OpenTintStrength:0f);
-            Counter.gameObject.SetActive(region.Open);
-            var backing=transform.Find("Amount backing"); if(backing) backing.gameObject.SetActive(region.Open);
-            Counter.text=!region.Open?"":region.Remaining==0?(IsSettled?"✓":"…"):DisplayAmount.Units(region.Remaining,Divider).ToString();
+            empty=Color.Lerp(EmptyTint,(Color)solid,region.InformationVisible?OpenTintStrength:0f);
+            Counter.gameObject.SetActive(region.InformationVisible);
+            var backing=transform.Find("Amount backing"); if(backing) backing.gameObject.SetActive(region.InformationVisible);
+            Counter.text=!region.InformationVisible || region.Remaining==0?"":DisplayAmount.Units(region.Remaining,Divider).ToString();
             PaintBase(); PaintMoving();
         }
         void PaintBase()
         {
-            for(int i=0;i<sand.Filled.Length;i++) Board.SetBase(sand.Cols[i],sand.Rows[i],sand.Filled[i]?settledColors[i]:empty);
+            for(int i=0;i<sand.Filled.Length;i++) Board.SetBase(sand.Cols[i],sand.Rows[i],sand.Filled[i]?(Color32)Color.Lerp(settledColors[i],Color.white,.12f*completionGlow):empty);
         }
         void PaintMoving()
         {
@@ -77,13 +79,23 @@ namespace SandJamTest.Scene3D
         }
         public void Advance(float delta)
         {
-            if(sand==null || delta<=0 || IsSettled) return;
+            if(sand==null || delta<=0) return;
+            if(IsSettled)
+            {
+                if(lastRemaining==0 && completionGlow<1)
+                {
+                    completionGlow=Mathf.MoveTowards(completionGlow,1,delta/.35f);
+                    PaintBase(); Counter.gameObject.SetActive(false);
+                    var backing=transform.Find("Amount backing");if(backing)backing.gameObject.SetActive(false);
+                }
+                return;
+            }
             int before=sand.Settled;
             stepTime+=delta;
             while(stepTime>=StepSeconds) { stepTime-=StepSeconds; sand.Step(); }
             if(before!=sand.Settled) PaintBase();
             PaintMoving();
-            if(IsSettled && lastRemaining==0) Counter.text="✓";
+            if(IsSettled && lastRemaining==0) { Counter.text="";Counter.gameObject.SetActive(false); }
         }
     }
 }

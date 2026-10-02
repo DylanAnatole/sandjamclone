@@ -6,7 +6,7 @@ namespace SandJamTest
 {
     // Pure simulation. The view advances this with a fixed timestep.
     // Prototype rule: finishing ANY linked region opens an ordinary region.
-    public sealed class SandGame
+    public sealed partial class SandGame
     {
         public readonly LevelData Data;
         public readonly Region[] Regions;

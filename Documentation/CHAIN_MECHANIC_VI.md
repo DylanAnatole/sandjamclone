@@ -13,7 +13,7 @@ Mở `Assets/Scenes/SandJamChainTest.unity`, nhấn Play rồi nút PLAY. Bấm 
 - Cặp ngang cần cả hai ra đầu hàng. Cặp dọc cần hai hộp liên tiếp đứng đầu cùng hàng; có thể bấm một trong hai.
 - Cả hai cùng bắt đầu di chuyển; chỉ rót khi cả hai đến nơi.
 - Mỗi hộp giữ màu và lượng cát riêng. Hộp hết trước ở lại với số 0; cả hai rời khi cùng hết cát.
-- Hai thanh nối đi theo vị trí hộp. Chơi lại xóa dây cũ và tạo đúng một dây cho mỗi cặp.
+- Hai thanh nối chỉ hiện khi cả hai hộp còn trong hàng chờ. Ngay khi chọn cặp lên ô rót, dây biến mất và không hiện khi di chuyển hoặc rót cát. Chơi lại khôi phục đúng một dây cho cặp trong hàng.
 
 Điều kiện hai ô liền nhau và chờ nhau khi hết cát là quy tắc triển khai của prototype. Ảnh tĩnh không chứng minh toàn bộ cách xử lý của game gốc.
 

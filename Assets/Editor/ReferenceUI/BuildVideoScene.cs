@@ -165,6 +165,7 @@ namespace SandJamTest.Editor
         }
         public static void CreateAndBuild()
         {
+            BoosterChecks.Run();
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true)};
             Create();PlayerSettings.defaultScreenWidth=483;PlayerSettings.defaultScreenHeight=1075;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;QualitySettings.antiAliasing=4;PlayerSettings.runInBackground=true;
             string output = chainDemo ? "BuildChainTest" : "BuildVideoUI"; Directory.CreateDirectory(output);

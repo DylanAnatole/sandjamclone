@@ -32,7 +32,9 @@ Không cần project AssetRipper bên ngoài để chạy scene. Các asset cầ
 - Camera phối cảnh cho sân chơi, camera trực giao riêng cho UI; hộp nghiêng, khung và ô chờ có độ dày.
 - Shader `SandJamTest/SandToonDepth`: sáng tối theo normal, texture cát, highlight và viền. Bóng tiếp xúc dùng decal mềm, không dùng shadow map thời gian thực.
 
-Settings, Shop, Gallery, Join, booster, x2 và mua tiền/tim hiện **chỉ có UI**. Số dư, phần thưởng và số level là giá trị tham chiếu. Chưa có quảng cáo, thanh toán, lưu tiến trình hoặc cơ chế đặc biệt đầy đủ.
+Ba booster đã hoạt động: hé lộ vùng, đổi hai hàng đầu và chọn hộp vượt lượt theo màu đang mở. Dùng miễn phí trong bản thử; xem [hướng dẫn hỗ trợ](Documentation/BOOSTERS_VI.md).
+
+Settings, Shop, Gallery, Join, x2 và mua tiền/tim hiện **chỉ có UI**. Số dư, phần thưởng và số level là giá trị tham chiếu. Chưa có quảng cáo, thanh toán, lưu tiến trình hoặc cơ chế đặc biệt đầy đủ.
 
 ## Build Windows
 

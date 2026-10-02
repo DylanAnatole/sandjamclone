@@ -34,6 +34,19 @@ namespace SandJamTest.Scene3D
         public AudioClip VictorySound;
         public Texture2D PlayButtonTexture;
         public SandGame Game { get; private set; }
+        public bool BoosterInputBlocked { get; set; }
+        int suppressedInputFrame = -1;
+        public void SuppressInputThisFrame() { suppressedInputFrame = Time.frameCount; }
+        public bool SwapFrontRows()
+        {
+            if (paused || Game == null || !Game.SwapFrontRows()) return false;
+            Synchronize(0); Play(SelectSound, .25f); return true;
+        }
+        public bool SelectPriority(Shooter shooter)
+        {
+            if (paused || Game == null || !Game.SelectPriority(shooter)) return false;
+            Synchronize(0); Play(SelectSound, .25f); return true;
+        }
         public string SelectionFeedback { get { return Time.unscaledTime < selectionFeedbackUntil ? selectionFeedback : ""; } }
         string selectionFeedback;
         float selectionFeedbackUntil;
@@ -114,7 +127,7 @@ namespace SandJamTest.Scene3D
         void Update()
         {
             FitCamera();
-            if (error != null || Game == null || smokeMode) return;
+            if (error != null || Game == null || smokeMode || BoosterInputBlocked || suppressedInputFrame == Time.frameCount) return;
             if (Input.GetKeyDown(KeyCode.R)) Restart();
             if (Input.GetKeyDown(KeyCode.Space)) paused = !paused;
             if (Input.GetKeyDown(KeyCode.Alpha1)) SelectLane(0);

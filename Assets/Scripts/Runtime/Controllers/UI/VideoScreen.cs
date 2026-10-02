@@ -18,9 +18,10 @@ namespace SandJamTest.Scene3D
         public Transform LoadingFill,Mascot;
         public GameObject FifthSlotLock;
         public TextMesh FifthSlotRemaining;
+        public BoosterController Boosters { get; private set; }
         public enum Page { Loading,Home,Gameplay,Celebration,Result }
         public Page Current { get; private set; }
-        float elapsed; Vector3 fillScale,mascotPosition; bool smoke;
+        float elapsed, winPresentationTime; Vector3 fillScale,mascotPosition; bool smoke;
         int transitionFrame,viewWidth,viewHeight;
         void Awake()
         {
@@ -28,10 +29,14 @@ namespace SandJamTest.Scene3D
             SandBoardTextureView.ObstacleTint=new Color(.51f,.50f,.68f);
             fillScale=LoadingFill.localScale;mascotPosition=Mascot.localPosition;
             Show(Page.Loading);
+            Boosters = gameObject.AddComponent<BoosterController>(); Boosters.Initialize(this);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--booster-smoke") >= 0) gameObject.AddComponent<BoosterSmoke>();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--feeling-smoke") >= 0) gameObject.AddComponent<FeelingSmoke>();
         }
         void OnDestroy(){SandBoardTextureView.ObstacleTint=new Color(.16f,.27f,.34f);}
         public void Show(Page page)
         {
+            if (Boosters && page != Page.Gameplay) Boosters.Cancel();
             Current=page;elapsed=0;
             Loading.SetActive(page==Page.Loading);Home.SetActive(page==Page.Home);Gameplay.SetActive(page==Page.Gameplay);
             Celebration.SetActive(page==Page.Celebration);Result.SetActive(page==Page.Result);
@@ -40,6 +45,8 @@ namespace SandJamTest.Scene3D
         }
         public void Play()
         {
+            winPresentationTime=0;
+            if (Boosters) Boosters.Cancel();
             Controller.Restart();Controller.Advance(0);Show(Page.Gameplay);
         }
         void Update()
@@ -68,8 +75,13 @@ namespace SandJamTest.Scene3D
             if(Current==Page.Gameplay && Controller.Game!=null)
             {
                 int remaining=Controller.Game.SlotRemaining(4);FifthSlotLock.SetActive(remaining>0);FifthSlotRemaining.text=remaining.ToString();
-                Status.text=Controller.Game.State==GameState.Lost?"Hết chỗ chờ · R: chơi lại":Controller.SelectionFeedback;
-                if(Controller.Game.State==GameState.Won && !smoke)Show(Page.Celebration);
+                Status.text=Controller.Game.State==GameState.Lost?"Hết chỗ chờ · R: chơi lại":Boosters && !string.IsNullOrEmpty(Boosters.Message)?Boosters.Message:Controller.SelectionFeedback;
+                if(Controller.Game.State==GameState.Won && !smoke)
+                {
+                    winPresentationTime+=Time.unscaledDeltaTime;
+                    if(winPresentationTime>=1.65f)Show(Page.Celebration);
+                }
+                else winPresentationTime=0;
             }
             if(smoke)return;
             if(Input.GetKeyDown(KeyCode.F1))Show(Page.Loading);
@@ -77,7 +89,7 @@ namespace SandJamTest.Scene3D
             if(Input.GetKeyDown(KeyCode.F3))Play();
             if(Input.GetKeyDown(KeyCode.F4))Show(Page.Celebration);
             if(Input.GetKeyDown(KeyCode.F5))Show(Page.Result);
-            if(Input.GetMouseButtonDown(0))
+            if(Input.GetMouseButtonDown(0) && !(Boosters && Boosters.PickerOpen))
             {
                 RaycastHit hit;
                 if(Physics.Raycast((UiCamera?UiCamera:Controller.GameCamera).ScreenPointToRay(Input.mousePosition),out hit,100,1<<9))
@@ -85,6 +97,7 @@ namespace SandJamTest.Scene3D
                     var button=hit.collider.GetComponent<VideoUiButton>();
                     if(button && button.Action=="play")Play();
                     else if(button && button.Action=="home")Show(Page.Home);
+                    else if(button && button.Action.StartsWith("booster:") && Boosters) Boosters.Activate(button.Action.Substring(8));
                 }
             }
         }
@@ -119,7 +132,7 @@ namespace SandJamTest.Scene3D
             Require(Controller.Game.Data.uiDivider==10,"Incorrect UI divider");
             Require(Controller.Game.SlotRemaining(4)==300,"Fifth slot should start locked at 300 units");
             Require(Controller.Game.Regions.Where(r=>r.Open).Select(r=>r.Remaining/10).OrderBy(n=>n).SequenceEqual(new[]{42,45}),"Initial regions differ from video");
-            Require(Placeholders.All(p=>!p.FunctionImplemented),"Booster functions must remain placeholders");
+            Require(Placeholders.Where(p=>p.ActionId=="rocket" || p.ActionId=="swap" || p.ActionId=="select").All(p=>p.FunctionImplemented),"Booster actions are not connected");
             Show(Page.Loading);yield return Capture(folder,"01-loading");
             Show(Page.Home);yield return Capture(folder,"02-home");
             Play();yield return Capture(folder,"03-gameplay");
@@ -166,7 +179,7 @@ namespace SandJamTest.Scene3D
             Show(Page.Celebration);yield return Capture(folder,"05-celebration");
             Show(Page.Result);yield return Capture(folder,"06-result");
             Play();Require(Controller.Game.Remaining==initial,"Replay did not reset level");
-            File.WriteAllText(Path.Combine(folder,"checks.txt"),"PASS: All five screens captured\nPASS: Perspective stage and orthographic HUD\nPASS: Toon shader supported and all character submeshes have materials\nPASS: Inclined pose survives restart\nPASS: Recovered Walk clip changes the leg bone pose\nPASS: Walking-to-slot screenshot captured\nPASS: Level 147 reference has 18 regions, amounts 45/42, divider 10\nPASS: Exactly five slots; fifth unlocks after 300 units\nPASS: Booster UI has no actions\nPASS: Purple selection pours sand\nPASS: Full 24-move replay wins with all 18 regions settled\nPASS: Replay restores level\n");
+            File.WriteAllText(Path.Combine(folder,"checks.txt"),"PASS: All five screens captured\nPASS: Perspective stage and orthographic HUD\nPASS: Toon shader supported and all character submeshes have materials\nPASS: Inclined pose survives restart\nPASS: Recovered Walk clip changes the leg bone pose\nPASS: Walking-to-slot screenshot captured\nPASS: Level 147 reference has 18 regions, amounts 45/42, divider 10\nPASS: Exactly five slots; fifth unlocks after 300 units\nPASS: Three booster actions connected\nPASS: Purple selection pours sand\nPASS: Full 24-move replay wins with all 18 regions settled\nPASS: Replay restores level\n");
             Application.Quit(0);
         }
     }
