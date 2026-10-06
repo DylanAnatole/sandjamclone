@@ -37,7 +37,14 @@ namespace SandJamTest.Scene3D
             for(int i=0;i<1000 && actor.DisplayedFill>.003f;i++){c.Advance(.03f);yield return null;}
             Check(actor.Departing && actor.DisplayedFill==0 && actor.Visual.localScale==scale,"Empty character shrank or retained sand");
             yield return Capture(folder,"03-empty-exit");
-            var style=actor.GetComponent<CharacterDepthStyle>();var properties=new MaterialPropertyBlock();style.Skin.GetPropertyBlock(properties);
+            var style=actor.GetComponent<CharacterDepthStyle>();
+            var vessel=actor.GetComponent<CharacterSandVessel>();
+            Check(vessel && !actor.Visual.Find("Contained sand volume").gameObject.activeSelf,"Empty vessel retained its sand volume");
+            var legMesh=style.Skin.sharedMesh;
+            Check(legMesh==Resources.Load<Mesh>("CharacterAnimation/CharacterLegs") && Enumerable.Range(0,legMesh.subMeshCount).Sum(i=>(long)legMesh.GetIndexCount(i))>0,"Recovered leg geometry missing");
+            var sourceMesh=Resources.Load<GameObject>("Original/CharacterVisual").GetComponentInChildren<SkinnedMeshRenderer>(true).sharedMesh;
+            Check(Enumerable.Range(0,legMesh.subMeshCount).Sum(i=>(long)legMesh.GetIndexCount(i))<Enumerable.Range(0,sourceMesh.subMeshCount).Sum(i=>(long)sourceMesh.GetIndexCount(i)),"Original body still present");
+            var properties=new MaterialPropertyBlock();style.Skin.GetPropertyBlock(properties);
             Check(properties.GetFloat("_FillAmount")==0 && properties.GetColor("_OutlineColor")==style.Skin.sharedMaterial.GetColor("_Color"),"Empty shader did not preserve original rim colour");
             for(int i=0;i<100 && actor.gameObject.activeSelf;i++){c.Advance(.03f);yield return null;}
             Check(!actor.gameObject.activeSelf && Mathf.Abs(actor.transform.position.x)>5,"Character did not walk off screen");

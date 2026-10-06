@@ -77,9 +77,10 @@ namespace SandJamTest
                 if (lane == null || lane.ColorAmmoDatas == null) throw new ArgumentException("Missing lane.");
                 foreach (var c in lane.ColorAmmoDatas)
                 {
+                    if(c.IsFreeze && c.FreezeCount <= 0) throw new ArgumentException("Frozen character needs a positive freeze count.");
                     if (c.AmmoCount <= 0) throw new ArgumentException("Invalid ammo.");
-                    if (c.IsSecret || c.IsFreeze || c.IsHalf || c.IsUnlocker)
-                        throw new ArgumentException("This test scene supports ordinary tutorial characters only.");
+                    if (c.IsSecret || c.IsHalf || c.IsUnlocker)
+                        throw new ArgumentException("Unsupported secret, half or unlocker character.");
                 }
             }
             ChainPairing.Resolve(data);
@@ -100,6 +101,7 @@ namespace SandJamTest
                 Slots[slot] = partnerLane < lane ? second : first;
                 Slots[slot + 1] = partnerLane < lane ? first : second;
             }
+            AdvanceFreeze(first.Partner == null ? 1 : 2);
             Moves++;
             Revision++;
             Evaluate();
@@ -113,6 +115,7 @@ namespace SandJamTest
             partnerLane = -1;
             if (lane < 0 || lane >= Lanes.Length || Lanes[lane].Count == 0) return -1;
             var first = Lanes[lane].Peek();
+            if(first.IsFrozen || (first.Partner != null && first.Partner.IsFrozen))return -1;
             if (first.Partner != null)
             {
                 var queue = Lanes[lane].ToArray();
@@ -137,7 +140,7 @@ namespace SandJamTest
 
         public int Target(Shooter shooter)
         {
-            if (shooter == null || shooter.Ammo <= 0) return -1;
+            if (shooter == null || shooter.IsFrozen || shooter.Ammo <= 0) return -1;
             return Array.FindIndex(Regions, p => p.Open && p.Remaining > 0 && p.Data.ColorType == shooter.Color);
         }
 
@@ -185,11 +188,12 @@ namespace SandJamTest
 
         public int HintLane()
         {
-            for (int i = 0; i < Lanes.Length; i++) if (Lanes[i].Count > 0 && Target(Lanes[i].Peek()) >= 0) return i;
+            for (int i = 0; i < Lanes.Length; i++) if (CanSelectLane(i) && Target(Lanes[i].Peek()) >= 0) return i;
             // Choose the lane whose next useful color is nearest the front.
             int best = -1, distance = int.MaxValue;
             for (int i = 0; i < Lanes.Length; i++)
             {
+                if(!CanSelectLane(i))continue;
                 int d = 0;
                 foreach (var s in Lanes[i]) { if (Target(s) >= 0 && d < distance) { best = i; distance = d; } d++; }
             }

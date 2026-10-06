@@ -7,6 +7,8 @@ Shader "SandJamTest/SandToonDepth"
         _GrainStrength ("Grain strength", Range(0,1)) = 0.85
         _OutlineColor ("Outline", Color) = (0.045,0.025,0.07,1)
         _OutlineWidth ("Outline world width", Float) = 0.014
+        _ShadeStrength ("Depth shading", Range(0,1)) = 1
+        _GrainContrast ("Grain contrast", Range(0,3)) = 1
         _Gloss ("Soft highlight", Range(0,1)) = 0.2
         _FillEnabled ("Character fill enabled", Float) = 0
         _FillAmount ("Remaining sand", Range(0,1)) = 1
@@ -26,7 +28,7 @@ Shader "SandJamTest/SandToonDepth"
             #include "UnityCG.cginc"
             float _OutlineWidth; fixed4 _OutlineColor;
             float _FillEnabled,_FillAmount,_FillBottom,_FillTop;
-            struct v2f { float4 pos:SV_POSITION; float height:TEXCOORD0; };
+            struct v2f { float4 pos:SV_POSITION; float height:TEXCOORD0; float worldY:TEXCOORD1; };
             v2f vert(appdata_base v)
             {
                 v2f o;float3 p=mul(unity_ObjectToWorld,v.vertex).xyz;
@@ -52,7 +54,7 @@ Shader "SandJamTest/SandToonDepth"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
-            sampler2D _MainTex;float4 _MainTex_ST;fixed4 _Color;float _GrainStrength,_Gloss;
+            sampler2D _MainTex;float4 _MainTex_ST;fixed4 _Color;float _GrainStrength,_Gloss,_ShadeStrength,_GrainContrast;
             float _FillEnabled,_FillAmount,_FillBottom,_FillTop;
             struct v2f { float4 pos:SV_POSITION;float3 normal:TEXCOORD0;float2 uv:TEXCOORD1;float3 world:TEXCOORD2; };
             v2f vert(appdata_base v)
@@ -66,7 +68,9 @@ Shader "SandJamTest/SandToonDepth"
                 float3 view=normalize(_WorldSpaceCameraPos-i.world);
                 float diffuse=dot(n,l);
                 float lighting=.53+.40*smoothstep(-.2,.65,diffuse)+.12*smoothstep(.65,.96,diffuse);
-                float grain=lerp(1,.60+.43*tex2D(_MainTex,i.uv).r,_GrainStrength);
+                lighting=lerp(1,lighting,_ShadeStrength);
+                float sampleGrain=saturate((tex2D(_MainTex,i.uv).r-.75)*_GrainContrast+.75);
+                float grain=lerp(1,.60+.43*sampleGrain,_GrainStrength);
                 float highlight=pow(saturate(dot(n,normalize(l+view))),28)*_Gloss;
                 float rim=pow(1-saturate(dot(n,view)),3)*.07;
                 float3 filled=_Color.rgb*grain*(lighting+rim)+highlight*.45;

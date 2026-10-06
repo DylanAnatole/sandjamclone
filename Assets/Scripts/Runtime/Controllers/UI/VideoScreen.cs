@@ -10,6 +10,7 @@ namespace SandJamTest.Scene3D
     public sealed class VideoScreen : MonoBehaviour
     {
         public SandJamSceneController Controller;
+        public bool ReferenceBoosterLabels;
         public Camera UiCamera;
         public TextMesh Status;
         public SpriteRenderer EditorPreview;
@@ -19,6 +20,7 @@ namespace SandJamTest.Scene3D
         public GameObject FifthSlotLock;
         public TextMesh FifthSlotRemaining;
         public BoosterController Boosters { get; private set; }
+        public GameplayFeedbackController Feedback { get; private set; }
         public enum Page { Loading,Home,Gameplay,Celebration,Result }
         public Page Current { get; private set; }
         float elapsed, winPresentationTime; Vector3 fillScale,mascotPosition; bool smoke;
@@ -30,8 +32,10 @@ namespace SandJamTest.Scene3D
             fillScale=LoadingFill.localScale;mascotPosition=Mascot.localPosition;
             Show(Page.Loading);
             Boosters = gameObject.AddComponent<BoosterController>(); Boosters.Initialize(this);
+            Feedback=gameObject.AddComponent<GameplayFeedbackController>();Feedback.Initialize(this);
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "--booster-smoke") >= 0) gameObject.AddComponent<BoosterSmoke>();
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "--feeling-smoke") >= 0) gameObject.AddComponent<FeelingSmoke>();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--october-smoke") >= 0) gameObject.AddComponent<OctoberVideoSmoke>();
         }
         void OnDestroy(){SandBoardTextureView.ObstacleTint=new Color(.16f,.27f,.34f);}
         public void Show(Page page)
@@ -74,7 +78,6 @@ namespace SandJamTest.Scene3D
             if(Current==Page.Celebration && elapsed>2.2f && !smoke)Show(Page.Result);
             if(Current==Page.Gameplay && Controller.Game!=null)
             {
-                int remaining=Controller.Game.SlotRemaining(4);FifthSlotLock.SetActive(remaining>0);FifthSlotRemaining.text=remaining.ToString();
                 Status.text=Controller.Game.State==GameState.Lost?"Hết chỗ chờ · R: chơi lại":Boosters && !string.IsNullOrEmpty(Boosters.Message)?Boosters.Message:Controller.SelectionFeedback;
                 if(Controller.Game.State==GameState.Won && !smoke)
                 {
@@ -89,7 +92,7 @@ namespace SandJamTest.Scene3D
             if(Input.GetKeyDown(KeyCode.F3))Play();
             if(Input.GetKeyDown(KeyCode.F4))Show(Page.Celebration);
             if(Input.GetKeyDown(KeyCode.F5))Show(Page.Result);
-            if(Input.GetMouseButtonDown(0) && !(Boosters && Boosters.PickerOpen))
+            if(Input.GetMouseButtonDown(0) && !(Boosters && Boosters.PickerOpen) && !(Feedback && Feedback.FailureVisible))
             {
                 RaycastHit hit;
                 if(Physics.Raycast((UiCamera?UiCamera:Controller.GameCamera).ScreenPointToRay(Input.mousePosition),out hit,100,1<<9))

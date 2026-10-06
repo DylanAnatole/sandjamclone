@@ -35,6 +35,7 @@ namespace SandJamTest.Scene3D
         public Texture2D PlayButtonTexture;
         public SandGame Game { get; private set; }
         public bool BoosterInputBlocked { get; set; }
+        void OnDestroy(){if(projectiles!=null)projectiles.Dispose();}
         int suppressedInputFrame = -1;
         public void SuppressInputThisFrame() { suppressedInputFrame = Time.frameCount; }
         public bool SwapFrontRows()
@@ -170,8 +171,10 @@ namespace SandJamTest.Scene3D
             if (paused || Game.State != GameState.Playing) return false;
             if (!Game.SelectLane(lane))
             {
+                var first = lane >= 0 && lane < Game.Lanes.Length && Game.Lanes[lane].Count > 0 ? Game.Lanes[lane].Peek() : null;
+                var frozen = first != null && first.IsFrozen ? first : first != null && first.Partner != null && first.Partner.IsFrozen ? first.Partner : null;
                 bool linked = lane >= 0 && lane < Game.Lanes.Length && Game.Lanes[lane].Count > 0 && Game.Lanes[lane].Peek().Partner != null;
-                selectionFeedback = linked ? "Chưa đủ chỗ hoặc cặp chưa ra đầu hàng" : "Ô chờ đã đầy";
+                selectionFeedback = frozen != null ? "Còn " + frozen.FreezeRemaining + " lớp băng · Đưa hộp khác lên trước" : linked ? "Chưa đủ chỗ hoặc cặp chưa ra đầu hàng" : "Ô chờ đã đầy";
                 selectionFeedbackUntil = Time.unscaledTime + 3;
                 Notify(selectionFeedback); return false;
             }
@@ -200,7 +203,7 @@ namespace SandJamTest.Scene3D
                     int completed = Game.Regions.Count(r => r.Remaining == 0);
                     var previousState = Game.State;
                     foreach (var shot in Game.Tick(AmmoPerShot, CanShoot))
-                        projectiles.Spawn(before[shot.Slot].AimPoint, Regions[shot.Region].Target.position + Vector3.back * .15f, shot.Color);
+                        projectiles.Spawn(before[shot.Slot].AimPoint, Regions[shot.Region].Target.position + Vector3.back * .15f, shot.Color, shot.Slot);
                     if (previousState != GameState.Won && Game.State == GameState.Won) Play(VictorySound, .45f);
                     else if (completed < Game.Regions.Count(r => r.Remaining == 0)) Play(CompleteSound, .3f);
                 }

@@ -36,7 +36,7 @@ namespace SandJamTest
 
         int PrioritySlot(Shooter shooter)
         {
-            if (shooter == null || !Lanes.Any(l => l.Contains(shooter))) return -1;
+            if (shooter == null || shooter.IsFrozen || (shooter.Partner != null && shooter.Partner.IsFrozen) || !Lanes.Any(l => l.Contains(shooter))) return -1;
             if (shooter.Partner != null && !Lanes.Any(l => l.Contains(shooter.Partner))) return -1;
             for (int i = 0; i < Slots.Length; i++)
                 if (Slots[i] == null && SlotRemaining(i) == 0 &&
@@ -57,6 +57,7 @@ namespace SandJamTest
                 lane.Clear(); foreach (var s in remaining) lane.Enqueue(s);
             }
             for (int i = 0; i < ordered.Length; i++) Slots[slot + i] = ordered[i];
+            AdvanceFreeze(ordered.Length);
             Moves++; Revision++;
             Evaluate();
             return true;

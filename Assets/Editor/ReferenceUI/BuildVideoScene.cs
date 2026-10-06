@@ -12,9 +12,9 @@ namespace SandJamTest.Editor
 {
     public static partial class BuildVideoScene
     {
-        static string Folder { get { return chainDemo ? "Assets/Generated/ChainTest" : "Assets/Generated/VideoUI"; } }
-        static bool chainDemo;
-        static string Scene { get { return chainDemo ? "Assets/Scenes/SandJamChainTest.unity" : "Assets/Scenes/SandJamVideoUI.unity"; } }
+        static string Folder { get { return video201 ? "Assets/Generated/Video201" : freezeDemo ? "Assets/Generated/FreezeTest" : chainDemo ? "Assets/Generated/ChainTest" : "Assets/Generated/VideoUI"; } }
+        static bool chainDemo, freezeDemo, video201;
+        static string Scene { get { return video201 ? "Assets/Scenes/SandJamVideo201.unity" : freezeDemo ? "Assets/Scenes/SandJamFreezeTest.unity" : chainDemo ? "Assets/Scenes/SandJamChainTest.unity" : "Assets/Scenes/SandJamVideoUI.unity"; } }
         static Color VideoColor(int id){switch(id){case 1: return new Color(0.74509805f,0.09411765f,0.09411765f,1.0f);case 2: return new Color(0.11372549f,0.7921569f,0.0f,1.0f);case 3: return new Color(0.0f,0.6392157f,1.0f,1.0f);case 4: return new Color(1.0f,0.8039216f,0.0f,1.0f);case 5: return new Color(1.0f,0.5294118f,0.0f,1.0f);case 6: return new Color(0.83137256f,0.0f,0.78039217f,1.0f);case 7: return new Color(0.43529412f,0.0f,0.9254902f,1.0f);case 8: return new Color(0.07450981f,0.07450981f,0.07450981f,1.0f);case 9: return new Color(0.8666667f,0.8666667f,0.8666667f,1.0f);case 10: return new Color(0.6509804f,0.40392157f,0.22352941f,1.0f);default:return SandJamDemo.Palette(id);}}
         static Font font; static Material spriteMaterial;
         static Sprite rounded, pad;
@@ -103,14 +103,15 @@ namespace SandJamTest.Editor
                 float y=811+i*78;int price=i==0?150:i==1?500:700;var p=Placeholder(hud,"Booster "+(i+1)+" - UI only",i==0?"rocket":i==1?"swap":"select",price);controls.Add(p);
                 Image("Purple booster button",Asset("button-booster"),p.transform,448,y,74,57,Color.white,-1);
                 Image("Booster icon",Asset("icon-booster-"+(3-i)),p.transform,448,y-19,49,49,Color.white,-1.1f);
-                if(i<3){Image("Price coin",Asset("icon-coin_0"),p.transform,434,y+12,15,15,Color.white,-1.2f);Text("Price",price.ToString(),p.transform,461,y+12,17,Color.white,-1.3f);}
+                if(!video201 || i<2){Image("Price coin",Asset("icon-coin_0"),p.transform,434,y+12,15,15,Color.white,-1.2f);Text("Price",price.ToString(),p.transform,461,y+12,17,Color.white,-1.3f);}
                 else {Image("Quantity badge",Asset("bg-booster-quantity"),p.transform,415,y+13,25,25,Color.white,-1.2f);Text("Quantity","1",p.transform,415,y+13,20,Color.white,-1.3f);}
             }
             reference.Placeholders=controls.ToArray();reference.Status=Text("Game result","",hud,241,731,18,Color.white,-1.5f,false);
-            var data=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>("VideoUI/PopArtOriginal").text);
+            var data=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>(video201?"VideoUI/Level201Original":"VideoUI/PopArtOriginal").text);
             // The video uses the special variant's fifth-slot threshold. Keep both exports unchanged.
-            data.gridSlotNeedAmmoCount=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>("VideoUI/PopArtSecretReference").text).gridSlotNeedAmmoCount;
+            if(!video201)data.gridSlotNeedAmmoCount=JsonUtility.FromJson<LevelData>(Resources.Load<TextAsset>("VideoUI/PopArtSecretReference").text).gridSlotNeedAmmoCount;
             if (chainDemo) ConfigureChainDemo(data);
+            if (freezeDemo) ConfigureFreezeDemo(data);
             string playable = Folder + (chainDemo ? "/ChainPlayable.json" : "/ReferencePlayable.json");
             File.WriteAllText(playable,JsonUtility.ToJson(data,true));AssetDatabase.ImportAsset(playable);controller.LevelJson=AssetDatabase.LoadAssetAtPath<TextAsset>(playable);SandGame.Validate(data);
             var board=Group("Pop Art face - grid texture",root);board.position=new Vector3(0,-.695f-.4f*(3.60f/6.3f),0);board.localScale=Vector3.one*(3.60f/6.3f);
@@ -149,10 +150,11 @@ namespace SandJamTest.Editor
                     view.Motion=AnimatedCharacter(pose,info.ColorType,1.18f);view.Visual=pose;
                     var label=Text("Ammo",DisplayAmount.Units(info.AmmoCount,data.uiDivider).ToString(),actor,0,0,21,Color.white,-.7f,true);label.transform.localPosition=new Vector3(0,.06f,-.75f);view.AmmoLabel=label;
                     view.ClickCollider=actor.gameObject.AddComponent<BoxCollider>();view.ClickCollider.center=new Vector3(0,.30f,0);view.ClickCollider.size=new Vector3(.73f,.84f,1.5f);
-                    if(!chainDemo && secretData.laneData[lane].ColorAmmoDatas[order].IsSecret)
+                    if(!chainDemo && !freezeDemo && !video201 && secretData.laneData[lane].ColorAmmoDatas[order].IsSecret)
                     {
                         var coverRoot=MysteryCube(actor);var q=actor.gameObject.AddComponent<ReferenceQueueCover>();q.Actor=view;q.Controller=controller;q.Cover=coverRoot;q.MaskedRenderers=pose.GetComponentsInChildren<Renderer>();
                     }
+                    if(info.IsFreeze) AddFreezeView(view);
                     actorViews.Add(view);
                 }
             }
@@ -161,14 +163,17 @@ namespace SandJamTest.Editor
             var camera=Group("Main Camera",root).gameObject.AddComponent<Camera>();camera.tag="MainCamera";camera.transform.position=new Vector3(0,0,-30);camera.orthographic=true;camera.orthographicSize=5.375f;camera.nearClipPlane=.1f;camera.farClipPlane=100;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Hex("DDD8F8");camera.gameObject.AddComponent<AudioListener>();controller.GameCamera=camera;
             ComposeScreens(root,reference,controller);ApplyDepth(root,reference,controller);
             if(chainDemo) { root.gameObject.AddComponent<ChainMechanicSmoke>(); foreach(var label in root.GetComponentsInChildren<TextMesh>(true)) if(label.text=="Level 147")label.text="Chain Test"; }
+            if(freezeDemo) ConfigureFreezeScreen(root);
+            if(video201) ConfigureVideo201(root,reference,controller);
             EditorSceneManager.SaveScene(scene,Scene);AssetDatabase.SaveAssets();
         }
         public static void CreateAndBuild()
         {
+            CharacterVesselMeshBuilder.Generate();
             BoosterChecks.Run();
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true)};
             Create();PlayerSettings.defaultScreenWidth=483;PlayerSettings.defaultScreenHeight=1075;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;QualitySettings.antiAliasing=4;PlayerSettings.runInBackground=true;
-            string output = chainDemo ? "BuildChainTest" : "BuildVideoUI"; Directory.CreateDirectory(output);
+            string output = video201 ? "BuildVideo201" : freezeDemo ? "BuildFreezeTest" : chainDemo ? "BuildChainTest" : "BuildVideoUI"; Directory.CreateDirectory(output);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},locationPathName=output+"/SandJam-VideoUI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Reference build failed");
         }

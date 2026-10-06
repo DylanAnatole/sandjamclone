@@ -15,7 +15,7 @@ namespace SandJamTest.Scene3D
         public bool AtRest { get { return travel >= duration; } }
         public bool Departing { get; private set; }
         public float DisplayedFill { get; private set; } = 1;
-        public Vector3 AimPoint { get { return transform.position + Vector3.up * .70f + Vector3.back * .18f; } }
+        public Vector3 AimPoint { get { return Visual ? Visual.TransformPoint(new Vector3(0,.81f,0)) : transform.position + Vector3.up * .70f; } }
         Vector3 from, destination, baseScale;
         Quaternion baseRotation;
         float travel, duration, exitDelay;

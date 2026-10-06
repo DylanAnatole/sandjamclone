@@ -43,6 +43,17 @@ namespace SandJamTest.Scene3D
                 var a = First.transform.position + offset;
                 var b = Second.transform.position + offset;
                 var inset = (b - a).normalized * Mathf.Min(.24f, Vector3.Distance(a,b) * .25f);
+                if(First.SourceLane==Second.SourceLane)
+                {
+                    var upper=First.SourceOrder<Second.SourceOrder?First:Second;
+                    var lower=upper==First?Second:First;
+                    float side=i==0?1:-1;
+                    a=upper.Visual.TransformPoint(new Vector3(side*.29f,.27f,-.30f));
+                    b=lower.Visual.TransformPoint(new Vector3(-side*.29f,.81f,-.30f));
+                    a.z=b.z=-.85f;inset=Vector3.zero;
+                }
+                var firstSkin=First.GetComponent<CharacterDepthStyle>();var secondSkin=Second.GetComponent<CharacterDepthStyle>();
+                if(firstSkin && secondSkin){straps[i].startColor=firstSkin.Skin.sharedMaterial.color;straps[i].endColor=secondSkin.Skin.sharedMaterial.color;}
                 straps[i].SetPosition(0, a + inset); straps[i].SetPosition(1, b - inset);
             }
         }

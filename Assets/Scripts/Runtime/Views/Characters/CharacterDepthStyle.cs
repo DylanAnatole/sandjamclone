@@ -8,16 +8,18 @@ namespace SandJamTest.Scene3D
         public SandJamSceneController Controller;
         public SkinnedMeshRenderer Skin;
         MaterialPropertyBlock properties;
+        CharacterSandVessel vessel;
         static readonly int Width=Shader.PropertyToID("_OutlineWidth");
         void LateUpdate()
         {
             if(!Skin || Actor.Shooter==null || Controller.Game==null)return;
+            if(!vessel){vessel=gameObject.AddComponent<CharacterSandVessel>();vessel.Initialize(Actor,Skin.sharedMaterial);}
             var lane=Controller.Game.Lanes[Actor.SourceLane];bool front=lane.Count>0 && lane.Peek()==Actor.Shooter;
             if(properties==null)properties=new MaterialPropertyBlock();
             Skin.GetPropertyBlock(properties);
             float amount=Actor.DisplayedFill;
             properties.SetFloat(Width,Mathf.Lerp(.024f,front?.026f:.006f,amount));
-            properties.SetFloat("_FillEnabled",1);properties.SetFloat("_FillAmount",amount);
+            properties.SetFloat("_FillEnabled",0);properties.SetFloat("_FillAmount",amount);
             properties.SetFloat("_FillBottom",Skin.bounds.min.y+.12f*Skin.bounds.size.y);
             properties.SetFloat("_FillTop",Skin.bounds.max.y);
             var color=Skin.sharedMaterial.GetColor("_Color");

@@ -38,6 +38,7 @@ namespace SandJamTest.Scene3D
                 var button = hit.AddComponent<VideoUiButton>();
                 button.Action = "booster:" + action;
                 placeholder.FunctionImplemented = true; placeholder.DisplayPrice = 0;
+                if(owner.ReferenceBoosterLabels)continue;
                 var price = placeholder.transform.Find("Price");
                 if (price) foreach (var label in price.GetComponentsInChildren<TextMesh>(true)) label.text = "Dùng";
                 var coin = placeholder.transform.Find("Price coin"); if (coin) coin.gameObject.SetActive(false);

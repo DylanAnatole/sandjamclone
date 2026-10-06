@@ -5,8 +5,10 @@ namespace SandJamTest
     {
         public readonly int Color, InitialAmmo;
         public int Ammo;
+        public int FreezeRemaining { get; internal set; }
+        public bool IsFrozen { get { return FreezeRemaining > 0; } }
         public Shooter Partner { get; internal set; }
-        public Shooter(CharacterData data) { Color = data.ColorType; Ammo = InitialAmmo = data.AmmoCount; }
+        public Shooter(CharacterData data) { Color = data.ColorType; Ammo = InitialAmmo = data.AmmoCount; FreezeRemaining = data.IsFreeze ? data.FreezeCount : 0; }
     }
     public sealed class Region
     {

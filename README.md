@@ -2,14 +2,16 @@
 
 Project Unity độc lập, phục dựng một màn Sand Jam theo video và dữ liệu do người dùng cung cấp.
 
-![Gameplay preview](Documentation/VideoUI/depth-preview.jpg)
+![Gameplay preview](Documentation/Video201/03-pouring.png)
 
 ## Mở project
 
 1. Clone repository này và thêm **thư mục repository** vào Unity Hub.
 2. Dùng **Unity 2022.3.62f3**.
-3. Mở `Assets/Scenes/SandJamVideoUI.unity`, nhấn Play.
-4. Từ Home, bấm **PLAY** để chơi màn khuôn mặt Level 147.
+3. Mở `Assets/Scenes/SandJamVideo201.unity`, nhấn Play.
+4. Từ Home, bấm **PLAY** để chơi Level 201 theo video.
+
+Màn cũ Level 147 vẫn ở `Assets/Scenes/SandJamVideoUI.unity`. Màn đóng băng ở `Assets/Scenes/SandJamFreezeTest.unity`: đưa hộp khác lên hàng bắn để giảm lớp băng. Xem [Level 201](Documentation/VIDEO_201_VI.md) và [cơ chế băng](Documentation/FREEZE_MECHANIC_VI.md).
 
 Không cần project AssetRipper bên ngoài để chạy scene. Các asset cần thiết đã được sao chép vào project; dữ liệu trích xuất đầy đủ và video tham chiếu không nằm trong repository.
 
@@ -23,6 +25,10 @@ Không cần project AssetRipper bên ngoài để chạy scene. Các asset cầ
 - **Next** về Home để thử lại cùng level; chưa có tiến trình nhiều level.
 
 ## Đã có
+
+- Level 201 dùng board và hàng chờ từ JSON gốc, hai cặp nối dọc, hai ô khóa 150/250; đã qua replay thắng 24 lượt.
+- Hộp có khung 3D và khối cát riêng: cát giảm dần, cạn thì rỗng, giữ màu viền và đi ra khỏi màn.
+- Màn test đóng băng với bộ đếm, hiệu ứng tan và kiểm tra tương tác booster/cặp nối.
 
 - Năm màn: Loading → Home → Gameplay → chúc mừng → kết quả.
 - Màn khuôn mặt từ `112x84_New_PopArt_13`: 18 vùng, ba hàng nhân vật, **đúng 5 ô chờ**.
@@ -41,7 +47,7 @@ Settings, Shop, Gallery, Join, x2 và mua tiền/tim hiện **chỉ có UI**. S�
 Có thể dùng Build Settings của Unity, hoặc gọi editor với:
 
 ```text
--batchmode -quit -projectPath <repo> -executeMethod SandJamTest.Editor.BuildVideoScene.CreateAndBuild -logFile <log-path>
+-batchmode -quit -projectPath <repo> -executeMethod SandJamTest.Editor.BuildVideoScene.CreateVideo201AndBuild -logFile <log-path>
 ```
 
 Lệnh tạo lại scene rồi xuất `BuildVideoUI/SandJam-VideoUI.exe`. Thư mục build không được commit. Menu `Sand Jam > Video UI > Create video screens` tạo lại scene trong Editor; lưu thay đổi scene đang mở trước khi dùng.
