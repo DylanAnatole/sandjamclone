@@ -25,7 +25,7 @@ namespace SandJamTest.Scene3D
             var frame=Part("Rounded vessel frame",frameMesh,material,actor.Visual);
             var block=new MaterialPropertyBlock();block.SetFloat("_GrainStrength",0);block.SetFloat("_OutlineWidth",.007f);frame.SetPropertyBlock(block);
             fillRenderer=Part("Contained sand volume",sandMesh,material,actor.Visual);sand=fillRenderer.transform;
-            block=new MaterialPropertyBlock();block.SetFloat("_OutlineWidth",0);block.SetFloat("_ShadeStrength",.55f);block.SetFloat("_GrainContrast",2.2f);fillRenderer.SetPropertyBlock(block);
+            block=new MaterialPropertyBlock();block.SetFloat("_OutlineWidth",0);block.SetFloat("_ShadeStrength",.85f);block.SetFloat("_GrainContrast",1.65f);block.SetFloat("_Gloss",.10f);fillRenderer.SetPropertyBlock(block);
             var cover=actor.GetComponent<ReferenceQueueCover>();
             if(cover)cover.MaskedRenderers=cover.MaskedRenderers.Concat(new Renderer[]{frame,fillRenderer}).ToArray();
             Refresh();
@@ -54,7 +54,7 @@ namespace SandJamTest.Scene3D
                 float angle=(corner*90+step*22.5f)*Mathf.Deg2Rad;
                 float x=(corner==0 || corner==3)?width*.5f-radius:-width*.5f+radius;
                 float z=corner<2?depth*.5f-radius:-depth*.5f+radius;
-                points.Add(new Vector3(x+Mathf.Cos(angle)*radius,y,z+Mathf.Sin(angle)*radius));
+                points.Add(new Vector3(x+Mathf.Cos(angle)*radius,y,(z+Mathf.Sin(angle)*radius)*1.15f));
             }
             return points.ToArray();
         }
@@ -78,22 +78,30 @@ namespace SandJamTest.Scene3D
         static Mesh Finish(List<Vector3> v,List<int> t,string name)
         {
             var mesh=new Mesh{name=name};mesh.SetVertices(v);mesh.SetTriangles(t,0);
-            mesh.SetUVs(0,v.Select(p=>new Vector2(p.x*.6f+p.y*.4f,p.z*.6f+p.y*.4f)).ToList());mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
+            mesh.SetUVs(0,v.Select(p=>new Vector2(p.x*.6f+p.y*.4f,p.z*.6f+p.y*.4f)).ToList());mesh.RecalculateNormals();
+            // Weld only normals, retaining separate face UVs for the grain texture.
+            var sums=new Dictionary<Vector3,Vector3>();var normals=mesh.normals;
+            for(int i=0;i<v.Count;i++){Vector3 sum;sums.TryGetValue(v[i],out sum);sums[v[i]]=sum+normals[i];}
+            for(int i=0;i<v.Count;i++)normals[i]=sums[v[i]].normalized;
+            mesh.normals=normals;mesh.RecalculateBounds();return mesh;
         }
         static void BuildMeshes()
         {
             var v=new List<Vector3>();var t=new List<int>();Ring(v,t,.25f);Ring(v,t,.80f);
             foreach(float x in new[]{-.33f,.33f})foreach(float z in new[]{-.245f,.245f})
             {
-                var low=Loop(.032f,.032f,.01f,.27f);var high=Loop(.032f,.032f,.01f,.815f);var offset=new Vector3(x,0,z);
+                var low=Loop(.032f,.032f,.01f,.27f);var high=Loop(.032f,.032f,.01f,.815f);var offset=new Vector3(x,0,z*1.15f);
                 for(int i=0;i<low.Length;i++){int j=(i+1)%low.Length;Quad(v,t,low[i]+offset,high[i]+offset,high[j]+offset,low[j]+offset);}
             }
             frameMesh=Finish(v,t,"Rounded sand vessel frame");
-            v=new List<Vector3>();t=new List<int>();var bottom=Loop(.65f,.48f,.07f,0);var top=Loop(.65f,.48f,.07f,1);
+            v=new List<Vector3>();t=new List<int>();var bottom=Loop(.61f,.44f,.085f,0);var top=Loop(.59f,.42f,.095f,1);
+            var lower=Loop(.65f,.48f,.11f,.07f);var upper=Loop(.65f,.48f,.11f,.92f);
             for(int i=0;i<bottom.Length;i++)
             {
                 int j=(i+1)%bottom.Length;
-                Quad(v,t,bottom[i],top[i],top[j],bottom[j]);
+                Quad(v,t,bottom[i],lower[i],lower[j],bottom[j]);
+                Quad(v,t,lower[i],upper[i],upper[j],lower[j]);
+                Quad(v,t,upper[i],top[i],top[j],upper[j]);
                 Quad(v,t,top[i],Vector3.up,Vector3.up,top[j]);
                 Quad(v,t,bottom[j],Vector3.zero,Vector3.zero,bottom[i]);
             }

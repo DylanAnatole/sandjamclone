@@ -28,7 +28,7 @@ Shader "SandJamTest/SandToonDepth"
             #include "UnityCG.cginc"
             float _OutlineWidth; fixed4 _OutlineColor;
             float _FillEnabled,_FillAmount,_FillBottom,_FillTop;
-            struct v2f { float4 pos:SV_POSITION; float height:TEXCOORD0; float worldY:TEXCOORD1; };
+            struct v2f { float4 pos:SV_POSITION; float height:TEXCOORD0; };
             v2f vert(appdata_base v)
             {
                 v2f o;float3 p=mul(unity_ObjectToWorld,v.vertex).xyz;

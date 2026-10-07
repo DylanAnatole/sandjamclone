@@ -1,0 +1,5 @@
+PASS: All visible shaders supported
+PASS: Every moving grain inside its region, no overlap
+PASS: No pixel outside receiving region changed during 70 frames
+PASS: Vertical stream starts at region inlet and uses region mask
+PASS: Partial sand settles and restart clears flow

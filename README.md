@@ -15,6 +15,16 @@ Màn cũ Level 147 vẫn ở `Assets/Scenes/SandJamVideoUI.unity`. Màn đóng b
 
 Không cần project AssetRipper bên ngoài để chạy scene. Các asset cần thiết đã được sao chép vào project; dữ liệu trích xuất đầy đủ và video tham chiếu không nằm trong repository.
 
+## Scene chung và Burst
+
+`SandJamGame.unity` nạp prefab của Level 1–3 qua catalog. Sáu scene cũ/trùng đã được bỏ; các scene test 147, 201, dây nối và băng vẫn giữ. Mô phỏng cát dùng Burst Jobs, xử lý độc lập theo vùng. Xem [kết quả tối ưu và gộp scene](Documentation/BURST_SCENE_MERGE_VI.md).
+
+## Test nhiều level
+
+Mở `Assets/Scenes/SandJamGame.unity`: Home có LV 1–3, thắng rồi Next để sang màn tiếp theo. Catalog ở `Assets/Resources/LevelPack/Catalog.asset`; tiến độ màn đã thắng được lưu bằng PlayerPrefs. [Phân tích 556 JSON và các manager](Documentation/LEVEL_DATA_MANAGERS_VI.md). [Danh mục dữ liệu](Documentation/LEVEL_DATA_INVENTORY.csv).
+
+Build bằng menu **Sand Jam > Levels > Build catalog levels**, hoặc editor method `SandJamTest.Editor.BuildVideoScene.CreateLevelPackAndBuild`.
+
 ## Điều khiển
 
 **Test cặp hộp nối nhau:** mở `Assets/Scenes/SandJamChainTest.unity`, Play → PLAY, rồi chọn hộp đen hoặc vàng. [Cơ chế và dữ liệu cặp nối](Documentation/CHAIN_MECHANIC_VI.md). [Phân chia scripts](Documentation/SCRIPT_STRUCTURE_V2_VI.md).

@@ -90,7 +90,7 @@ namespace SandJamTest.Scene3D
             if (flag >= 0 && flag + 1 < args.Length) { smokeMode = true; smokeOutput = args[flag + 1]; }
             try
             {
-                level = JsonUtility.FromJson<LevelData>(LevelJson.text);
+                level = LevelDataManager.Load(LevelJson);
                 if (Regions.Length != level.parts.Length || Characters.Length != level.laneData.Sum(l => l.ColorAmmoDatas.Length) || StashSlots.Length != 5)
                     throw new InvalidOperationException("Scene references do not match the tutorial.");
                 var boardObject=new GameObject("Sand Board - Grid Texture SpriteRenderer");
@@ -199,17 +199,18 @@ namespace SandJamTest.Scene3D
                 while (accumulator >= ShotInterval)
                 {
                     accumulator -= ShotInterval;
-                    var before = Game.Slots.Select(s => s == null ? null : characterQueue.ViewFor(s)).ToArray();
                     int completed = Game.Regions.Count(r => r.Remaining == 0);
                     var previousState = Game.State;
                     foreach (var shot in Game.Tick(AmmoPerShot, CanShoot))
-                        projectiles.Spawn(before[shot.Slot].AimPoint, Regions[shot.Region].Target.position + Vector3.back * .15f, shot.Color, shot.Slot);
+                        projectiles.Spawn(Regions[shot.Region], shot.Color, shot.Slot);
                     if (previousState != GameState.Won && Game.State == GameState.Won) Play(VictorySound, .45f);
                     else if (completed < Game.Regions.Count(r => r.Remaining == 0)) Play(CompleteSound, .3f);
                 }
             }
             Synchronize(0);
-            foreach (var region in Regions) region.Advance(delta);
+            foreach (var region in Regions) region.BeginAdvance(delta);
+            Unity.Jobs.JobHandle.ScheduleBatchedJobs();
+            foreach (var region in Regions) region.FinishAdvance();
             projectiles.Advance(delta);
         }
 

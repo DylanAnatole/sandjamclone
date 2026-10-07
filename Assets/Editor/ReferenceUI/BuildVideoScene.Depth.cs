@@ -113,7 +113,8 @@ namespace SandJamTest.Editor
                 var style=actor.gameObject.AddComponent<CharacterDepthStyle>();style.Actor=actor;style.Controller=controller;style.Skin=actor.GetComponentInChildren<SkinnedMeshRenderer>();
             }
             // Real perspective for the board, geometry and moving actors; flat HUD has its own camera.
-            controller.GameCamera.orthographic=false;controller.GameCamera.fieldOfView=2*Mathf.Atan(5.375f/30f)*Mathf.Rad2Deg;
+            controller.GameCamera.transform.position=new Vector3(0,0,-18);
+            controller.GameCamera.orthographic=false;controller.GameCamera.fieldOfView=2*Mathf.Atan(5.375f/18f)*Mathf.Rad2Deg;
             controller.GameCamera.cullingMask=~(1<<5);controller.GameCamera.depth=0;controller.GameCamera.allowHDR=false;controller.GameCamera.allowMSAA=true;
             var overlay=Group("UI Camera - orthographic overlay",root).gameObject.AddComponent<Camera>();
             overlay.transform.position=new Vector3(0,0,-30);overlay.orthographic=true;overlay.orthographicSize=5.375f;overlay.clearFlags=CameraClearFlags.Depth;overlay.depth=1;overlay.cullingMask=1<<5;overlay.nearClipPlane=.1f;overlay.farClipPlane=100;overlay.allowHDR=false;

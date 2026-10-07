@@ -11,6 +11,7 @@ namespace SandJamTest.Scene3D
     {
         public SandJamSceneController Controller;
         public bool ReferenceBoosterLabels;
+        public LevelManager Levels;
         public Camera UiCamera;
         public TextMesh Status;
         public SpriteRenderer EditorPreview;
@@ -81,6 +82,7 @@ namespace SandJamTest.Scene3D
                 Status.text=Controller.Game.State==GameState.Lost?"Hết chỗ chờ · R: chơi lại":Boosters && !string.IsNullOrEmpty(Boosters.Message)?Boosters.Message:Controller.SelectionFeedback;
                 if(Controller.Game.State==GameState.Won && !smoke)
                 {
+                    if(Levels)Levels.RecordCompletion();
                     winPresentationTime+=Time.unscaledDeltaTime;
                     if(winPresentationTime>=1.65f)Show(Page.Celebration);
                 }
@@ -100,6 +102,8 @@ namespace SandJamTest.Scene3D
                     var button=hit.collider.GetComponent<VideoUiButton>();
                     if(button && button.Action=="play")Play();
                     else if(button && button.Action=="home")Show(Page.Home);
+                    else if(button && button.Action=="next-level" && Levels)Levels.LoadNext();
+                    else if(button && button.Action.StartsWith("level:") && Levels){int index;if(int.TryParse(button.Action.Substring(6),out index))Levels.Select(index);}
                     else if(button && button.Action.StartsWith("booster:") && Boosters) Boosters.Activate(button.Action.Substring(8));
                 }
             }

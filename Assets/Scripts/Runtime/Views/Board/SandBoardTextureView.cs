@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Collections;
 
 namespace SandJamTest.Scene3D
 {
@@ -12,7 +13,7 @@ namespace SandJamTest.Scene3D
         public int UploadCount { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
-        Color32[] background, pixels;
+        NativeArray<Color32> background, pixels;
         Sprite sprite;
         Material material;
         bool dirty;
@@ -21,12 +22,12 @@ namespace SandJamTest.Scene3D
         public void Initialize(LevelData level, Transform coordinates)
         {
             Width=level.columnCount; Height=level.rowCount;
-            background=new Color32[Width*Height]; pixels=new Color32[background.Length];
+            background=new NativeArray<Color32>(Width*Height,Allocator.Persistent); pixels=new NativeArray<Color32>(background.Length,Allocator.Persistent);
             Texture=new Texture2D(Width,Height,TextureFormat.RGBA32,false) {name="Sand grid - one pixel per cell",filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp,anisoLevel=0};
             sprite=Sprite.Create(Texture,new Rect(0,0,Width,Height),Vector2.zero,1f/CellSize,0,SpriteMeshType.FullRect);
             sprite.name="Sand board single quad";
             Renderer=gameObject.AddComponent<SpriteRenderer>(); Renderer.sprite=sprite;
-            material=new Material(Shader.Find("SandJamTest/PixelSandSprite")); Renderer.sharedMaterial=material;
+            material=new Material(Shader.Find("SandJamTest/PixelSandSprite")); material.SetFloat("_BoardSurface",1); Renderer.sharedMaterial=material;
             transform.SetParent(coordinates,false); transform.localPosition=new Vector3(-3.15f,.4f,-.02f);
             // Include obstacles in the same texture so the board needs only one renderer.
             var wall=(Color32)ObstacleTint;
@@ -49,11 +50,12 @@ namespace SandJamTest.Scene3D
         void LateUpdate()
         {
             if(!dirty || lastUploadFrame==Time.frameCount) return;
-            Texture.SetPixels32(pixels); Texture.Apply(false,false);
+            Texture.SetPixelData(pixels,0); Texture.Apply(false,false);
             dirty=false; lastUploadFrame=Time.frameCount; UploadCount++;
         }
         void OnDestroy()
         {
+            if(background.IsCreated)background.Dispose();if(pixels.IsCreated)pixels.Dispose();
             if(sprite) Destroy(sprite); if(Texture) Destroy(Texture); if(material) Destroy(material);
         }
     }

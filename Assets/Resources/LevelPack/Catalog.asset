@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc3314940223214897b5256356cd40a, type: 3}
+  m_Name: Catalog
+  m_EditorClassIdentifier:
+  ProgressId: original-first-three-v1
+  Levels:
+  - Number: 1
+    SourceId: 112x84_Level31_Tutorial
+    SceneName: SandJamLevel001
+    PrefabResource: LevelPack/Prefabs/Level001
+    Json: {fileID: 4900000, guid: b8e41bb1694a9b643aa2373ecbe1e7f3, type: 3}
+    TestReplay: {fileID: 4900000, guid: 430d0ed7325f2814ca2d33c6fcff84f7, type: 3}
+  - Number: 2
+    SourceId: 112x84_Level3_B
+    SceneName: SandJamLevel002
+    PrefabResource: LevelPack/Prefabs/Level002
+    Json: {fileID: 4900000, guid: d1c6751b90928c140a3f92d98e6aa307, type: 3}
+    TestReplay: {fileID: 4900000, guid: e6d405efb929bbc4c8edbc84a6b16911, type: 3}
+  - Number: 3
+    SourceId: 112x84_Level2_B_Dupe
+    SceneName: SandJamLevel003
+    PrefabResource: LevelPack/Prefabs/Level003
+    Json: {fileID: 4900000, guid: d889b197b23a9e04e962f4158b6dc24e, type: 3}
+    TestReplay: {fileID: 4900000, guid: d788a49c1e4e68b44aa7cd9cc98681d0, type: 3}
